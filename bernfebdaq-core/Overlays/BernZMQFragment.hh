@@ -161,6 +161,7 @@ class bernfebdaq::BernZMQFragment {
   BernZMQFragment(artdaq::Fragment const & f) : artdaq_Fragment_(f) {}
 
   BernZMQFragmentMetadata const * metadata() const { return artdaq_Fragment_.metadata<BernZMQFragmentMetadata>(); }
+  BernZMQFragmentMetadata Metadata() const { return *(this->metadata()); }
 
   BernZMQEvent const* eventdata(uint16_t e) const {
     if(e > metadata()->n_events())
@@ -168,6 +169,7 @@ class bernfebdaq::BernZMQFragment {
 	<< "Event requested (" << (uint32_t)e << ") is out of range: " << metadata()->n_events();
     return ( reinterpret_cast<BernZMQEvent const*>(artdaq_Fragment_.dataBeginBytes() + e*sizeof(BernZMQEvent)) );
   }
+  BernZMQEvent Event(uint16_t e) const { return *(this->eventdata(e)); }
 
   size_t DataPayloadSize() const { return artdaq_Fragment_.dataSizeBytes(); }
 
