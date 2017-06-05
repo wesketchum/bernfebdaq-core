@@ -445,7 +445,6 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 					   0,0,
 					   zmq_ev.MAC5(),0,
 					   32,12);
-
 	frag_time =  ( ((uint64_t)metadata.time_start_seconds() << 32 ) + metadata.time_start_nanosec() );
 
 	size_t i_next_buffer=i_buffer+1;	    
@@ -458,6 +457,8 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 	  fFEBCurrentBuffer[zmq_ev.MAC5()] = i_next_buffer;	  
 	}
 
+	metadata.inc_Events(myFEBBuffer.size());
+			    
 	std::unique_ptr<artdaq::Fragment> myfragptr =
 	  artdaq::Fragment::FragmentBytes(metadata.n_events()*sizeof(BernZMQEvent),
 					  fEventNumber,metadata.feb_id(),
