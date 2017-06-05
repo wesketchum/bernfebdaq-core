@@ -1,0 +1,19 @@
+#include "bernfebdaq-core/BuildInfo/GetPackageBuildInfo.hh"
+
+#include <string>
+
+namespace coredemo {
+
+  artdaq::PackageBuildInfo GetPackageBuildInfo::getPackageBuildInfo() {
+
+    artdaq::PackageBuildInfo pkg;
+
+    pkg.setPackageName("artdaq-core-demo");
+    pkg.setPackageVersion("@version@");
+    pkg.setBuildTimestamp("@utcDateTime@");
+
+    return pkg;
+  }
+
+}
+
