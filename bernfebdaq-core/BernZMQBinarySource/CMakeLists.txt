@@ -1,5 +1,10 @@
 art_make( LIBRARY_NAME bernfebdaq_BernZMQBinarySource
+	  	 LIB_LIBRARIES
+				bernfebdaq-core_Overlays
+				${FHICLCPP}
+				art_Persistency_Provenance				
 	  	 SOURCE_LIBRARIES
+				bernfebdaq_BernZMQBinarySource
 		 		bernfebdaq-core_Overlays
 #				artdaq_ArtModules
 				art_Framework_Core
