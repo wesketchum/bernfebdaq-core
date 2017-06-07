@@ -23,6 +23,9 @@ class bernfebdaq::BernZMQBinaryInputStreamReader {
 
 public:
   BernZMQBinaryInputStreamReader( fhicl::ParameterSet const& );
+  BernZMQBinaryInputStreamReader( fhicl::ParameterSet const& p, std::ifstream& is)
+    : BernZMQBinaryInputStreamReader(p)
+  { SetInputStream(is); }
 
   void SetInputStream (std::ifstream& is ) { fInputStream = &is; }
 
