@@ -114,7 +114,9 @@ void bernfebdaq::BernZMQBinaryInputDetail::readFile(std::string const & filename
   while(fInputStreamList.getline(file_name,512)){
     std::cout << "Got file " << file_name << std::endl;
     fInputStreams.emplace_back(file_name,std::ios_base::in | std::ios_base::binary);
-    fStreamReaders.emplace_back(fConfigPSet,fInputStreams.back());
+  }
+  for(size_t i_f=0; i_f<fInputStreams.size(); ++i_f){
+    fStreamReaders.emplace_back(fConfigPSet,fInputStreams[i_f]);
     fInputStreamLastPullTime.emplace_back(0);    
   }
   std::cout << "Opened input streams: " << fInputStreams.size() << std::endl;
@@ -176,7 +178,7 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 						    art::EventPrincipal*& outE)
 {
   size_t i_file = getNextFileIndex();
-  
+
   if(!fInputStreams[i_file]) {
 
     if(fFragMap.size()==0)
@@ -202,6 +204,7 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
       return true;
     }
 
+    //std::cout << "Read..." << std::endl;
     auto ts = fStreamReaders[i_file].ReadUntilSpecialEvent(fFragMap);
     std::cout << "File " << i_file << ":\treached pull event ... "
 	      << ts.timeHigh() << ", " << ts.timeLow()
@@ -209,9 +212,14 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 	      << std::endl;
     if(ts!=0)
       fInputStreamLastPullTime[i_file] = ts;
-    else
-      fInputStreamLastPullTime[i_file] = 0xffffffffffffffff;
-      
+    else{
+      std::cout << "\tFile is closed? " << fInputStreams[i_file].eof() << " " 
+		<< fInputStreams[i_file].rdstate() << std::endl;
+      if(fInputStreams[i_file].eof())
+	fInputStreamLastPullTime[i_file] = 0xffffffffffffffff;
+      else if(fInputStreams[i_file].fail())
+	fInputStreams[i_file].clear();
+    }
     i_file = getNextFileIndex();
   }
 
