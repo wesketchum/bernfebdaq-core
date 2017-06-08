@@ -8,6 +8,7 @@
 #include "TInterpreter.h"
 #include "TROOT.h"
 #include "TH1F.h"
+#include "TTree.h"
 #include "TFile.h"
 #include "TStyle.h"
 #include "TSystem.h"
