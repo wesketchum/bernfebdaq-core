@@ -1,0 +1,10 @@
+#!/bin/sh
+
+#Assuming at this point you have your mrb area all made, 
+#and that you've built and sourced what you need...
+
+setup bernfebdaq_core v00_04_00 -qe14:nu:prof:s48
+setup gallery v1_03_12 -qe14:nu:prof
+
+#Also, if doing the python stuff, you need that setup already ...
+
