@@ -114,7 +114,7 @@ bool bernfebdaq::BernZMQBinaryInputStreamReader::KeepCurrentEvent(std::vector<Be
 		  << " " << diff_0_1_ts0 << " " << diff_0_1_ts1 << " " << diff_diff_0_1
 		  << std::endl;
 
-  if(std::abs(diff_diff_0_1)>fMaxTSDiff){
+  if(std::abs(diff_diff_0_1)>std::abs(fMaxTSDiff)){
 
     size_t max_multi_stuck_events = fMaxStuckEvents;
     if(myFEBBuffer.size()<fMaxStuckEvents)
@@ -143,7 +143,7 @@ bool bernfebdaq::BernZMQBinaryInputStreamReader::KeepCurrentEvent(std::vector<Be
       diff_diff = (long int)(diff_ts0) - (long int)(diff_ts1);
       
       //OK, so, if we find a matching one ...
-      if(std::abs(diff_diff)<=fMaxStuckEvents){
+      if(std::abs(diff_diff)<=std::abs(fMaxStuckEvents)){
 
 	current_is_bad=false;
 	for(size_t i_r=1; i_r<i_e; ++i_r){
