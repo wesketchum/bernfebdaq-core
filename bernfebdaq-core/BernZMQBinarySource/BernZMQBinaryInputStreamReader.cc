@@ -66,7 +66,11 @@ art::Timestamp bernfebdaq::BernZMQBinaryInputStreamReader::SpecialEventTimestamp
   
   for(auto const& buffer : fFEBBuffers){
     auto mac = buffer.first;
-    fPullLastEvent[mac] = buffer.second[fFEBCurrentBuffer[mac]].back().Time_TS0();
+    auto cbuf = fFEBCurrentBuffer[mac];
+    if(buffer.second[cbuf].size()>0)
+      fPullLastEvent[mac] = buffer.second[cbuf].back().Time_TS0();
+    else
+      fPullLastEvent[mac] = 1000000000;
   }
 
   return ts;
@@ -114,7 +118,7 @@ bool bernfebdaq::BernZMQBinaryInputStreamReader::KeepCurrentEvent(std::vector<Be
 		  << " " << diff_0_1_ts0 << " " << diff_0_1_ts1 << " " << diff_diff_0_1
 		  << std::endl;
 
-  if(std::abs(diff_diff_0_1)>fMaxTSDiff){
+  if(std::abs(diff_diff_0_1)>(int)fMaxTSDiff){
 
     size_t max_multi_stuck_events = fMaxStuckEvents;
     if(myFEBBuffer.size()<fMaxStuckEvents)
@@ -143,7 +147,7 @@ bool bernfebdaq::BernZMQBinaryInputStreamReader::KeepCurrentEvent(std::vector<Be
       diff_diff = (long int)(diff_ts0) - (long int)(diff_ts1);
       
       //OK, so, if we find a matching one ...
-      if(std::abs(diff_diff)<=fMaxStuckEvents){
+      if(std::abs(diff_diff)<=(int)fMaxStuckEvents){
 
 	current_is_bad=false;
 	for(size_t i_r=1; i_r<i_e; ++i_r){
