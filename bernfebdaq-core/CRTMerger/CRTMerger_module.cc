@@ -62,6 +62,8 @@ private:
   art::InputTag              fCRTDataLabel;
   gallery::Event             fCRTEvent;
 
+  int                        fVerbosity;
+  
 };
 
 
@@ -77,7 +79,7 @@ bernfebdaq::CRTMerger::CRTMerger(fhicl::ParameterSet const & p)
 
 void bernfebdaq::CRTMerger::produce(art::Event & e)
 {
-
+  
   std::unique_ptr< std::vector<artdaq::Fragment> >
     FragmentVectorPtr(new std::vector<artdaq::Fragment>);
   std::vector<artdaq::Fragment> & FragmentVector(*FragmentVectorPtr);
@@ -85,33 +87,66 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
   uint32_t time_seconds = e.time().timeHigh();
   uint32_t time_nanosec = e.time().timeLow();
 
+  if(fVerbosity>0)
+    std::cout << "TPC event time is "
+	      << time_seconds << " s, "
+	      << time_nanosec << " ns."
+	      << std::endl;
+  
   while(!fCRTEvent.atEnd()){
+
+    if(fVerbosity>0)
+      std::cout << "Looping in CRT events..." << std::endl;
     
     auto const& crtdaq_handle = 
       fCRTEvent.getValidHandle< std::vector<artdaq::Fragment> >(fCRTDataLabel);
 
     auto const& crtdaq_vector(*crtdaq_handle);
 
-    if(crtdaq_vector.size()==0)
-      break;
-    
+    if(crtdaq_vector.size()==0){
+      if(fVerbosity>0)
+	std::cout << "\tCRTDAQ vector has zero size. Move to next CRT event." << std::endl;
+      fCRTEvent.next();
+      continue;
+    }
+
     bernfebdaq::BernZMQFragment frag(crtdaq_vector[0]);
+
+    if(fVerbosity>0)
+      std::cout << "\tCRT event time is ("
+		<< frag.metadata()->time_start_seconds() << " s ,"
+		<< frag.metadata()->time_start_nanosec() << " ns)"
+		<< " --> ("
+		<< frag.metadata()->time_end_seconds() << " s ,"
+		<< frag.metadata()->time_end_nanosec() << " ns)"
+		<< std::endl;
+    
     if( time_seconds>=frag.metadata()->time_start_seconds() &&
 	time_seconds<=frag.metadata()->time_end_seconds() &&
 	time_nanosec>=frag.metadata()->time_start_nanosec() &&
 	time_nanosec<=frag.metadata()->time_end_nanosec())
       {
+	if(fVerbosity>0)
+	  std::cout << "\t\tFOUND MATCH!" << std::endl;
 	FragmentVector = crtdaq_vector;
+	break;
+      }
+    else if(time_seconds<frag.metadata()->time_start_seconds() ||
+	    (time_seconds==frag.metadata()->time_start_seconds() &&
+	     time_nanosec<frag.metadata()->time_start_nanosec()))
+      {
+	if(fVerbosity>0)
+	  std::cout << "\t\tCRTEvents too advanced. Go to next TPC event!" << std::endl;
 	break;
       }
     else if(time_seconds>frag.metadata()->time_end_seconds() ||
 	    (time_seconds==frag.metadata()->time_end_seconds() &&
 	     time_nanosec>frag.metadata()->time_end_nanosec()))
-      break;
-    else if(time_seconds<frag.metadata()->time_start_seconds() ||
-	    (time_seconds==frag.metadata()->time_start_seconds() &&
-	     time_nanosec<frag.metadata()->time_start_nanosec()))
-      fCRTEvent.next();
+      {
+	if(fVerbosity>0)
+	  std::cout << "\t\tCRTEvents too early. Go to next CRT event!" << std::endl;
+	fCRTEvent.next();
+      }
   }
 
   e.put(std::move(FragmentVectorPtr));
@@ -131,6 +166,7 @@ void bernfebdaq::CRTMerger::reconfigure(fhicl::ParameterSet const & p)
 {
   fCRTFileNames = p.get< std::vector<std::string> >("CRTFileNames");
   fCRTDataLabel = p.get< art::InputTag >("CRTDataLabel");
+  fVerbosity    = p.get<int>("Verbosity");
 }
 /*
 void bernfebdaq::CRTMerger::respondToCloseInputFile(art::FileBlock const & fb)
