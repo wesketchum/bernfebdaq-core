@@ -54,7 +54,7 @@ public:
   void reconfigure(fhicl::ParameterSet const & p) override;
 
   //void respondToCloseInputFile(art::FileBlock const & fb) override;
-  //void respondToOpenInputFile(art::FileBlock const & fb) override;
+  void respondToOpenInputFile(art::FileBlock const & fb) override;
 
 private:
 
@@ -172,11 +172,12 @@ void bernfebdaq::CRTMerger::reconfigure(fhicl::ParameterSet const & p)
 void bernfebdaq::CRTMerger::respondToCloseInputFile(art::FileBlock const & fb)
 {
 }
-
-
-void bernfebdaq::CRTMerger::respondToOpenInputFile(art::FileBlock const & fb)
-{
-}
 */
+
+void bernfebdaq::CRTMerger::respondToOpenInputFile(art::FileBlock const &)
+{
+  fCRTEvent.toBegin();
+}
+
 
 DEFINE_ART_MODULE(bernfebdaq::CRTMerger)
