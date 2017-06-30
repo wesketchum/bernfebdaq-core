@@ -62,7 +62,10 @@ private:
   art::InputTag              fCRTDataLabel;
   gallery::Event             fCRTEvent;
 
+  bool                       fAssumeInputFileListOrdered;
   int                        fVerbosity;
+  
+  std::vector<artdaq::Fragment> fPreviousFragmentVector;
   
 };
 
@@ -128,7 +131,16 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
       {
 	if(fVerbosity>0)
 	  std::cout << "\t\tFOUND MATCH!" << std::endl;
-	FragmentVector = crtdaq_vector;
+	FragmentVector = fPreviousFragmentVector; //prev window
+	FragmentVector.insert(FragmentVector.end(),crtdaq_vector.begin(),crtdaq_vector.end()); //this window
+	fCRTEvent.next();
+	if(!fCRTEvent.atEnd()){
+	  auto const& crtdaq_next_handle = 
+	    fCRTEvent.getValidHandle< std::vector<artdaq::Fragment> >(fCRTDataLabel);	  
+	  auto const& crtdaq_next_vector(*crtdaq_next_handle);
+	  FragmentVector.insert(FragmentVector.end(),crtdaq_next_vector.begin(),crtdaq_next_vector.end()); //next window	  
+	  fPreviousFragmentVector = crtdaq_vector;
+	}
 	break;
       }
     else if(time_seconds<frag.metadata()->time_start_seconds() ||
@@ -145,6 +157,7 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
       {
 	if(fVerbosity>1)
 	  std::cout << "\t\tCRTEvents too early. Go to next CRT event!" << std::endl;
+	fPreviousFragmentVector = crtdaq_vector;
 	fCRTEvent.next();
       }
   }
@@ -167,6 +180,7 @@ void bernfebdaq::CRTMerger::reconfigure(fhicl::ParameterSet const & p)
   fCRTFileNames = p.get< std::vector<std::string> >("CRTFileNames");
   fCRTDataLabel = p.get< art::InputTag >("CRTDataLabel");
   fVerbosity    = p.get<int>("Verbosity");
+  fAssumeInputFileListOrdered = p.get<bool>("AssumeInputFileListOrdered");
 }
 /*
 void bernfebdaq::CRTMerger::respondToCloseInputFile(art::FileBlock const & fb)
@@ -176,7 +190,8 @@ void bernfebdaq::CRTMerger::respondToCloseInputFile(art::FileBlock const & fb)
 
 void bernfebdaq::CRTMerger::respondToOpenInputFile(art::FileBlock const &)
 {
-  fCRTEvent.toBegin();
+  if(!fAssumeInputFileListOrdered)
+    fCRTEvent.toBegin();
 }
 
 

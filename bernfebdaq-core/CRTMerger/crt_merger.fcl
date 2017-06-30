@@ -29,7 +29,8 @@ physics:
  {
    crtmerger: {
    	        module_type: CRTMerger
-   	      	Verbosity:1
+   	      	Verbosity: 0
+		AssumeInputFileListOrdered: True
 		CRTFileNames: [ "/Users/wketchum/MicroBooNE_Data/CRT_Data/crt_artdaq_0602-201006.root" ]
 		CRTDataLabel: "crtdaq"
 	      }
