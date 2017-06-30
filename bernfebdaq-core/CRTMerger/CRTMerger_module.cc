@@ -135,7 +135,7 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
 	    (time_seconds==frag.metadata()->time_start_seconds() &&
 	     time_nanosec<frag.metadata()->time_start_nanosec()))
       {
-	if(fVerbosity>0)
+	if(fVerbosity>1)
 	  std::cout << "\t\tCRTEvents too advanced. Go to next TPC event!" << std::endl;
 	break;
       }
@@ -143,7 +143,7 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
 	    (time_seconds==frag.metadata()->time_end_seconds() &&
 	     time_nanosec>frag.metadata()->time_end_nanosec()))
       {
-	if(fVerbosity>0)
+	if(fVerbosity>1)
 	  std::cout << "\t\tCRTEvents too early. Go to next CRT event!" << std::endl;
 	fCRTEvent.next();
       }
