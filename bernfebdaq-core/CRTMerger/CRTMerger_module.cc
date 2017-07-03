@@ -62,7 +62,7 @@ private:
   art::InputTag              fCRTDataLabel;
   gallery::Event             fCRTEvent;
 
-  int                        fCRTTimeOffset;
+  long int                   fCRTTimeOffsetNanoseconds;
 
   bool                       fAssumeInputFileListOrdered;
   int                        fVerbosity;
@@ -92,10 +92,12 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
   uint32_t time_seconds = e.time().timeHigh();
   uint32_t time_nanosec = e.time().timeLow();
 
+  uint64_t time_tpc = ((uint64_t)time_seconds)*1000000000 + (uint64_t)time_nanosec;
+  
   if(fVerbosity>0)
     std::cout << "TPC event time is "
-	      << time_seconds << " s, "
-	      << time_nanosec << " ns."
+	      << time_tpc/1000000000 << " s, "
+	      << time_tpc%1000000000 << " ns."
 	      << std::endl;
   
   while(!fCRTEvent.atEnd()){
@@ -116,20 +118,24 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
     }
 
     bernfebdaq::BernZMQFragment frag(crtdaq_vector[0]);
+    uint64_t time_crt_start = ((uint64_t)(frag.metadata()->time_start_seconds()))*1000000000 +
+      (uint64_t)(frag.metadata()->time_start_nanosec());
+    uint64_t time_crt_end = ((uint64_t)(frag.metadata()->time_end_seconds()))*1000000000 +
+      (uint64_t)(frag.metadata()->time_end_nanosec());
 
+    time_crt_start += fCRTTimeOffsetNanoseconds;
+    time_crt_end += fCRTTimeOffsetNanoseconds;
+    
     if(fVerbosity>0)
       std::cout << "\tCRT event time is ("
-		<< frag.metadata()->time_start_seconds()+fCRTTimeOffset << " s ,"
-		<< frag.metadata()->time_start_nanosec() << " ns)"
+		<< time_crt_start/1000000000 << " s ,"
+		<< time_crt_start%1000000000 << " ns)"
 		<< " --> ("
-		<< frag.metadata()->time_end_seconds()+fCRTTimeOffset << " s ,"
-		<< frag.metadata()->time_end_nanosec() << " ns)"
+		<< time_crt_end/1000000000 << " s ,"
+		<< time_crt_end%1000000000 << " ns)"
 		<< std::endl;
     
-    if( time_seconds>=frag.metadata()->time_start_seconds()+fCRTTimeOffset &&
-	time_seconds<=frag.metadata()->time_end_seconds()+fCRTTimeOffset &&
-	time_nanosec>=frag.metadata()->time_start_nanosec() &&
-	time_nanosec<=frag.metadata()->time_end_nanosec())
+    if( time_tpc>=time_crt_start && time_tpc<=time_crt_end)
       {
 	if(fVerbosity>0)
 	  std::cout << "\t\tFOUND MATCH!" << std::endl;
@@ -145,17 +151,13 @@ void bernfebdaq::CRTMerger::produce(art::Event & e)
 	}
 	break;
       }
-    else if(time_seconds<frag.metadata()->time_start_seconds()+fCRTTimeOffset ||
-	    (time_seconds==frag.metadata()->time_start_seconds()+fCRTTimeOffset &&
-	     time_nanosec<frag.metadata()->time_start_nanosec()))
+    else if(time_tpc<time_crt_start)
       {
 	if(fVerbosity>1)
 	  std::cout << "\t\tCRTEvents too advanced. Go to next TPC event!" << std::endl;
 	break;
       }
-    else if(time_seconds>frag.metadata()->time_end_seconds()+fCRTTimeOffset ||
-	    (time_seconds==frag.metadata()->time_end_seconds()+fCRTTimeOffset &&
-	     time_nanosec>frag.metadata()->time_end_nanosec()))
+    else if(time_tpc>time_crt_end)
       {
 	if(fVerbosity>1)
 	  std::cout << "\t\tCRTEvents too early. Go to next CRT event!" << std::endl;
@@ -183,7 +185,7 @@ void bernfebdaq::CRTMerger::reconfigure(fhicl::ParameterSet const & p)
   fCRTDataLabel = p.get< art::InputTag >("CRTDataLabel");
   fVerbosity    = p.get<int>("Verbosity");
   fAssumeInputFileListOrdered = p.get<bool>("AssumeInputFileListOrdered");
-  fCRTTimeOffset = p.get<int>("CRTTimeOffset");
+  fCRTTimeOffsetNanoseconds = p.get<long int>("CRTTimeOffsetNanoseconds");
 }
 /*
 void bernfebdaq::CRTMerger::respondToCloseInputFile(art::FileBlock const & fb)
