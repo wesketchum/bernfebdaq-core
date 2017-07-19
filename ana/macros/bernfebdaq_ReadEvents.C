@@ -21,7 +21,7 @@ void bernfebdaq_ReadEvents(std::string filename, std::string output_file="output
 
   //see this by doing an event dump 'lar -c eventdump.fcl -s <file_name> -n 1'
   //should be "daq" for the files with all servers
-  art::InputTag daqTag("daq:crt04");
+  art::InputTag daqTag("crtdaq");
 
   //setup output file ...
   TFile f_out(output_file.c_str(),"RECREATE");
@@ -72,7 +72,7 @@ void bernfebdaq_ReadEvents(std::string filename, std::string output_file="output
       // Now do all the stuff you want to do with the fragments ....
 
       //There's a streamer...
-      //std::cout << frag << std::endl;
+      std::cout << frag << std::endl;
 
       //get a pointer to the metadata class
       //the pointer keeps us from making a copy of the data...

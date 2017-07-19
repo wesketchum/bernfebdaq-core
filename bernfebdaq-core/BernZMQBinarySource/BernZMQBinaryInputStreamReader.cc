@@ -13,7 +13,7 @@ bernfebdaq::BernZMQBinaryInputStreamReader::BernZMQBinaryInputStreamReader(fhicl
   fLastPullTime = 0;
   fEventsPerPullCounter = 0;
 
-  fNanosecondsPerFragment = 1000000000 / 200;
+  fNanosecondsPerFragment = 1000000000 / fFragsPerSecond;
 }
 
 art::Timestamp bernfebdaq::BernZMQBinaryInputStreamReader::ConvertMyTimebType( struct mytimeb_t const& tb)
