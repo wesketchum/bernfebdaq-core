@@ -27,7 +27,6 @@ namespace bernfebdaq {
   // Forward declaration of detail class.
   class BernZMQBinaryInputDetail;
 }
-
 ////////////////////////////////////////////////////////////////////////
 // Any declarations of specializations of Source traits (see
 // art/Framework/IO/Sources/SourceTraits.h) should go here.
@@ -99,43 +98,46 @@ bernfebdaq::BernZMQBinaryInputDetail::BernZMQBinaryInputDetail(fhicl::ParameterS
     fPrevSubRunNumber(0),
     fFragsPerEvent(ps.get<size_t>("FragsPerEvent")),
     fConfigPSet(ps.get<fhicl::ParameterSet>("BernZMQBinaryInputStreamReaderConfig"))
-{  
-  helper.reconstitutes< std::vector<artdaq::Fragment>, art::InEvent >(fModuleLabel,fInstanceLabel);
+{ 
+	//std::cout<<"1 BernZMQBinaryInputDetail"<<std::endl;
+	std::cout<<"ModuleLabel: "<<fModuleLabel<<std::endl;
+	std::cout<<"FragsPerEvent: "<<fFragsPerEvent<<std::endl;
+	//std::cout<<"NFEBBuffers: "<<fConfigPSet.NFEBBuffers<<std::endl;
+	helper.reconstitutes< std::vector<artdaq::Fragment>, art::InEvent >(fModuleLabel,fInstanceLabel);
 }
 
 
 void bernfebdaq::BernZMQBinaryInputDetail::readFile(std::string const & filename, art::FileBlock*& fb)
 {
-  fb = new art::FileBlock(art::FileFormatVersion(1, "RawEvent2011"), filename);
-
-  fInputStreamList.open(filename.c_str(),std::ios_base::in);
-  char file_name[512];
-  
-  while(fInputStreamList.getline(file_name,512)){
-    std::cout << "Got file " << file_name << std::endl;
-    fInputStreams.emplace_back(file_name,std::ios_base::in | std::ios_base::binary);
-  }
-  for(size_t i_f=0; i_f<fInputStreams.size(); ++i_f){
-    fStreamReaders.emplace_back(fConfigPSet,fInputStreams[i_f]);
-    fInputStreamLastPullTime.emplace_back(0);    
-  }
-  std::cout << "Opened input streams: " << fInputStreams.size() << std::endl;
-  std::cout << "Opened StreamReaders: " << fStreamReaders.size() << std::endl;
-
+	fb = new art::FileBlock(art::FileFormatVersion(1, "RawEvent2011"), filename);
+	
+	fInputStreamList.open(filename.c_str(),std::ios_base::in);
+	char file_name[512];
+	
+	while(fInputStreamList.getline(file_name,512))
+	{
+		std::cout << "Got file " << file_name << std::endl;
+		fInputStreams.emplace_back(file_name,std::ios_base::in | std::ios_base::binary);
+	}
+	for(size_t i_f=0; i_f<fInputStreams.size(); ++i_f)
+	{
+		fStreamReaders.emplace_back(fConfigPSet,fInputStreams[i_f]);
+		fInputStreamLastPullTime.emplace_back(0);    
+	}
+	std::cout << "Opened input streams: " << fInputStreams.size() << std::endl;
+	std::cout << "Opened StreamReaders: " << fStreamReaders.size()<< std::endl;
 }
 
 void bernfebdaq::BernZMQBinaryInputDetail::closeCurrentFile()
 {
-  for(auto & stream : fInputStreams)
-    stream.close();
-  fInputStreamList.close();
+	for(auto & stream : fInputStreams)
+	stream.close();
+	fInputStreamList.close();
 }
 
 size_t bernfebdaq::BernZMQBinaryInputDetail::getNextFileIndex()
 {
-  return (size_t)(std::distance(fInputStreamLastPullTime.begin(),
-		       std::min_element(fInputStreamLastPullTime.begin(),
-					fInputStreamLastPullTime.end())));
+	return (size_t)(std::distance(fInputStreamLastPullTime.begin(),std::min_element(fInputStreamLastPullTime.begin(),fInputStreamLastPullTime.end())));
 }
 
 void bernfebdaq::BernZMQBinaryInputDetail::writeEvent(FragMap_t::value_type & e,
@@ -145,30 +147,30 @@ void bernfebdaq::BernZMQBinaryInputDetail::writeEvent(FragMap_t::value_type & e,
 						      art::SubRunPrincipal*& outSR,
 						      art::EventPrincipal*& outE)
 {
-  uint64_t const& frag_time = e.first;
-  
-  size_t run_num = 1;
-  size_t subrun_num = 1;
-    
-  if(run_num!=fPrevRunNumber){
-    outR = fSourceHelper.makeRunPrincipal(run_num,frag_time);
-    outSR = fSourceHelper.makeSubRunPrincipal(run_num,subrun_num,frag_time);
-    fPrevRunNumber = run_num;
-    fPrevSubRunNumber =subrun_num;
-  }
-  else if(subrun_num!=fPrevSubRunNumber){
-    outSR = fSourceHelper.makeSubRunPrincipal(run_num,subrun_num,frag_time);
-    fPrevSubRunNumber =subrun_num;
-  }
-  
-  outE = fSourceHelper.makeEventPrincipal(run_num,
+	uint64_t const& frag_time = e.first;
+	
+	size_t run_num = 1;
+	size_t subrun_num = 1;
+	
+	if(run_num!=fPrevRunNumber)
+	{
+		outR = fSourceHelper.makeRunPrincipal(run_num,frag_time);
+		outSR = fSourceHelper.makeSubRunPrincipal(run_num,subrun_num,frag_time);
+		fPrevRunNumber = run_num;
+		fPrevSubRunNumber =subrun_num;
+	}
+	else if(subrun_num!=fPrevSubRunNumber)
+	{
+		outSR = fSourceHelper.makeSubRunPrincipal(run_num,subrun_num,frag_time);
+		fPrevSubRunNumber =subrun_num;
+	}
+	
+	outE = fSourceHelper.makeEventPrincipal(run_num,
 					  subrun_num,
 					  fEventNumber++,
 					  frag_time);
   
-  art::put_product_in_principal(std::move(e.second),
-				*outE,
-				fModuleLabel, fInstanceLabel);
+	art::put_product_in_principal(std::move(e.second),*outE, fModuleLabel, fInstanceLabel);
 }
 
 bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* const inR,
@@ -177,63 +179,68 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 						    art::SubRunPrincipal*& outSR,
 						    art::EventPrincipal*& outE)
 {
-  size_t i_file = getNextFileIndex();
-
-  if(!fInputStreams[i_file]) {
-
-    if(fFragMap.size()==0)
-      return false;
-
-    auto & e = *(fFragMap.begin());
-    writeEvent(e,inR,inSR,outR,outSR,outE);      
-    fFragMap.erase(fFragMap.begin());
-    return true;
-  }
-
-  while(fInputStreams[i_file]){
-
-    //std::cout << "Total of " << fFragMap.size() << " fragment events registered." << std::endl;
-    
-    for(FragMap_t::iterator i_fm=fFragMap.begin(); i_fm!=fFragMap.end(); i_fm++){
-      
-      if(i_fm->second->size()<fFragsPerEvent) continue;
-
-      auto & e = *(fFragMap.begin());
-      writeEvent(e,inR,inSR,outR,outSR,outE);      
-      fFragMap.erase(fFragMap.begin());
-      return true;
-    }
-
-    //std::cout << "Read..." << std::endl;
-    auto ts = fStreamReaders[i_file].ReadUntilSpecialEvent(fFragMap);
-    std::cout << "File " << i_file << ":\treached pull event ... "
-	      << ts.timeHigh() << ", " << ts.timeLow()
-	      << "\t(" << fFragMap.size() << " fragment events registered)"
-	      << std::endl;
-    if(ts!=0)
-      fInputStreamLastPullTime[i_file] = ts;
-    else{
-      std::cout << "\tFile is closed? " << fInputStreams[i_file].eof() << " " 
-		<< fInputStreams[i_file].rdstate() << std::endl;
-      if(fInputStreams[i_file].eof())
-	fInputStreamLastPullTime[i_file] = 0xffffffffffffffff;
-      else if(fInputStreams[i_file].fail())
-	fInputStreams[i_file].clear();
-    }
-    i_file = getNextFileIndex();
-  }
-
-  if(fFragMap.size()==0)
-    return false;
-  auto & e = *(fFragMap.begin());
-  writeEvent(e,inR,inSR,outR,outSR,outE);      
-  fFragMap.erase(fFragMap.begin());
-  return true;
-
+	
+	
+	size_t i_file = getNextFileIndex();
+	
+	if(!fInputStreams[i_file])
+	{
+		if(fFragMap.size()==0)
+		return false;
+		auto & e = *(fFragMap.begin());
+		writeEvent(e,inR,inSR,outR,outSR,outE);      
+		fFragMap.erase(fFragMap.begin());
+		return true;
+	}
+	
+	while(fInputStreams[i_file])
+	{
+		//std::cout << "Total of " << fFragMap.size() << " fragment events registered." << std::endl;
+    		
+		for(FragMap_t::iterator i_fm=fFragMap.begin(); i_fm!=fFragMap.end(); i_fm++)
+		{
+			if(i_fm->second->size()<fFragsPerEvent) continue;
+			auto & e = *(fFragMap.begin());
+			writeEvent(e,inR,inSR,outR,outSR,outE);      
+			fFragMap.erase(fFragMap.begin());
+			return true;
+		}
+		auto ts = fStreamReaders[i_file].ReadUntilSpecialEvent(fFragMap);
+		std::cout << "File " << i_file << ":\treached pull event ... "
+			<< ts.timeHigh() << ", " << ts.timeLow()
+			<< "\t(" << fFragMap.size() << " fragment events registered)"
+			<< std::endl;
+		if(ts!=0)
+		{
+			fInputStreamLastPullTime[i_file] = ts;
+			i_file = getNextFileIndex();
+		}
+		else
+		{
+			std::cout<< "\tFile is closed? " << fInputStreams[i_file].eof() << " "
+				<< fInputStreams[i_file].rdstate() << std::endl;
+			if(fInputStreams[i_file].eof())
+			fInputStreamLastPullTime[i_file] = 0xffffffffffffffff;
+			else if(fInputStreams[i_file].fail())
+			{
+				std::cout<<"do something else"<<std::endl;
+				//fInputStreams[i_file].clear();
+			}
+		}
+		//i_file = getNextFileIndex();
+	}
+	
+	if(fFragMap.size()==0)
+	return false;
+	auto & e = *(fFragMap.begin());
+	writeEvent(e,inR,inSR,outR,outSR,outE);      
+	fFragMap.erase(fFragMap.begin());
+	return true;
 }
  
 // Optional typedef.
-namespace bernfebdaq {
+namespace bernfebdaq
+{
   using BernZMQBinaryInputSource = art::Source<BernZMQBinaryInputDetail>;
 }
 
