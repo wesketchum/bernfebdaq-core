@@ -26,7 +26,7 @@ art::Timestamp bernfebdaq::BernZMQBinaryInputStreamReader::GetNextPullTime()
   bernfebdaq::BernZMQEvent zmq_ev;
   zmq_ev.mac5 = 0x1234;
 
-  int current_position = fInputStream->tellg();
+  uint64_t current_position = fInputStream->tellg();
 
   while(true){
   

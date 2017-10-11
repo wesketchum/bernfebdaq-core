@@ -99,10 +99,6 @@ bernfebdaq::BernZMQBinaryInputDetail::BernZMQBinaryInputDetail(fhicl::ParameterS
     fFragsPerEvent(ps.get<size_t>("FragsPerEvent")),
     fConfigPSet(ps.get<fhicl::ParameterSet>("BernZMQBinaryInputStreamReaderConfig"))
 { 
-	//std::cout<<"1 BernZMQBinaryInputDetail"<<std::endl;
-	std::cout<<"ModuleLabel: "<<fModuleLabel<<std::endl;
-	std::cout<<"FragsPerEvent: "<<fFragsPerEvent<<std::endl;
-	//std::cout<<"NFEBBuffers: "<<fConfigPSet.NFEBBuffers<<std::endl;
 	helper.reconstitutes< std::vector<artdaq::Fragment>, art::InEvent >(fModuleLabel,fInstanceLabel);
 }
 
@@ -179,8 +175,6 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 						    art::SubRunPrincipal*& outSR,
 						    art::EventPrincipal*& outE)
 {
-	
-	
 	size_t i_file = getNextFileIndex();
 	
 	if(!fInputStreams[i_file])
@@ -195,8 +189,7 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 	
 	while(fInputStreams[i_file])
 	{
-		//std::cout << "Total of " << fFragMap.size() << " fragment events registered." << std::endl;
-    		
+		//std::cout << "Total of " << fFragMap.size() << " fragment events registered for file # " << i_file << std::endl;
 		for(FragMap_t::iterator i_fm=fFragMap.begin(); i_fm!=fFragMap.end(); i_fm++)
 		{
 			if(i_fm->second->size()<fFragsPerEvent) continue;
@@ -206,15 +199,17 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 			return true;
 		}
 		auto ts = fStreamReaders[i_file].ReadUntilSpecialEvent(fFragMap);
+		
+		long test = fInputStreams[i_file].tellg();
+		std::cout<<"test: "<<test<<std::endl;
+		
 		std::cout << "File " << i_file << ":\treached pull event ... "
 			<< ts.timeHigh() << ", " << ts.timeLow()
 			<< "\t(" << fFragMap.size() << " fragment events registered)"
 			<< std::endl;
+		
 		if(ts!=0)
-		{
-			fInputStreamLastPullTime[i_file] = ts;
-			i_file = getNextFileIndex();
-		}
+		fInputStreamLastPullTime[i_file] = ts;
 		else
 		{
 			std::cout<< "\tFile is closed? " << fInputStreams[i_file].eof() << " "
@@ -222,12 +217,11 @@ bool bernfebdaq::BernZMQBinaryInputDetail::readNext(art::RunPrincipal const* con
 			if(fInputStreams[i_file].eof())
 			fInputStreamLastPullTime[i_file] = 0xffffffffffffffff;
 			else if(fInputStreams[i_file].fail())
-			{
-				std::cout<<"do something else"<<std::endl;
-				//fInputStreams[i_file].clear();
-			}
+			fInputStreams[i_file].clear();
 		}
-		//i_file = getNextFileIndex();
+		i_file = getNextFileIndex();
+		std::cout<<"i_file: "<<i_file<<std::endl;
+		std::cout<<"................"<<std::endl;
 	}
 	
 	if(fFragMap.size()==0)

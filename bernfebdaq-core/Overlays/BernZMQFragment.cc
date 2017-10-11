@@ -81,6 +81,10 @@ bool bernfebdaq::BernZMQFragment::Verify() const {
   return verified;
     
 }
+double bernfebdaq::GetCorrectedTime( uint32_t const& t, BernZMQFragmentMetadata const& m)
+{
+  return (double)(t+m.time_offset()) * (1.0 - ((double)(m.time_correction_diff())/1.0e9));
+}
 /*
 std::string bernfebdaq::BernZMQEvent::db_entry() const {
 

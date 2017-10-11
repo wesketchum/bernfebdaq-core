@@ -182,10 +182,11 @@ private:
   artdaq::Fragment const & artdaq_Fragment_;
 
 };
-
+double bernfebdaq::GetCorrectedTime( uint32_t const& t, BernZMQFragmentMetadata const& m);
+/*
 double bernfebdaq::GetCorrectedTime( uint32_t const& t, BernZMQFragmentMetadata const& m)
 {
   return (double)(t+m.time_offset()) * (1.0 - ((double)(m.time_correction_diff())/1.0e9));
 }
-
+*/
 #endif /* artdaq_demo_Overlays_ToyFragment_hh */
